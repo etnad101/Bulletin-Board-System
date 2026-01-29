@@ -4,8 +4,13 @@
 * Handles commands sent by clients
 */
 
-
 public class CommandHandler {
+    private ServerCtx serverCtx;
+
+    public CommandHandler(ServerCtx serverCtx) {
+        this.serverCtx = serverCtx;
+    }
+
     public void handleCommand(String commandString) {
         // Parse command string into more accessible format
         Command command = new Command(commandString);
@@ -24,6 +29,13 @@ public class CommandHandler {
         switch (command.getType()) {
             case POST:
                 System.out.println("POST command received");
+                Note note = new Note(
+                    Integer.parseInt(command.getArgv()[0]),
+                    Integer.parseInt(command.getArgv()[1]),
+                    command.getArgv()[2],
+                    command.getArgv()[3]
+                );
+                this.serverCtx.state.addNote(note);
                 break;
             case GET:
                 System.out.println("GET command received");

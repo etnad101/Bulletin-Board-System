@@ -12,13 +12,13 @@ import java.io.PrintWriter;
 
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
-    private static ServerCtx serverCtx;
-
-    private CommandHandler commandHandler = new CommandHandler();
+    private CommandHandler commandHandler; 
+    private ServerCtx serverCtx;
 
     public ClientHandler(Socket clientSocket, ServerCtx serverCtx) {
         this.clientSocket = clientSocket;
-        ClientHandler.serverCtx = serverCtx;
+        this.serverCtx = serverCtx;
+        this.commandHandler = new CommandHandler(serverCtx);
     }
 
     @Override
@@ -26,13 +26,7 @@ public class ClientHandler implements Runnable {
         // Send initial information about server to client
         try {
             PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
-            writer.println(serverCtx.getBoardWidth());
-            writer.println(serverCtx.getBoardHeight());
-            writer.println(serverCtx.getNoteWidth());
-            writer.println(serverCtx.getNoteHeight());
-            for (String colour : serverCtx.getAllowedColors()) {
-                writer.println(colour);
-            }
+            writer.println(serverCtx.config.serialize());
         } catch(IOException e) {
             System.out.println("Error sending server context to client: " + e.getMessage());
         }

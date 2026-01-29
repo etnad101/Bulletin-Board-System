@@ -11,6 +11,7 @@ import java.io.IOException;
 
 public class Server {
     private static ServerSocket serverSocket;
+    private static ServerCtx serverCtx;
 
     public static void main(String[] args) {
         // Check for correct number of arguments
@@ -21,7 +22,7 @@ public class Server {
 
         // Parse command line arguments
         int port = -1;
-        ServerCtx serverCtx = null;
+        ServerConfig serverConfig = null;
 
         try {
             port = Integer.parseInt(args[0]);
@@ -34,7 +35,7 @@ public class Server {
                 allowedColors[i - 5] = args[i];
             }
 
-            serverCtx = new ServerCtx(boardWidth, boardHeight, noteWidth, noteHeight, allowedColors);
+            serverConfig = new ServerConfig(boardWidth, boardHeight, noteWidth, noteHeight, allowedColors);
         } catch (NumberFormatException e) {
             // Exit if junk arguments are provided
             System.out.println("Invalid number format in arguments: " + e.getMessage());
@@ -43,14 +44,16 @@ public class Server {
 
         System.out.println("Server is starting...");
 
-        // Start server socket
+        // Start server
         try {
+            serverCtx = new ServerCtx(serverConfig);
             serverSocket = new ServerSocket(port);
-            System.out.println("Server is running on port " + port);
         } catch (IOException e) {
             System.out.println("Error starting server: " + e.getMessage());
             System.exit(1);
         }
+
+        System.out.println("Server is running on port " + port);
 
         // Accept client connections
         while (true) {
