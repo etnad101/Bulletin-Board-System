@@ -16,4 +16,8 @@ public class ServerState {
     public synchronized void addNote(Note note) {
         this.notes.add(note);
     }
+
+    public synchronized ArrayList<Note> getNotes() {
+        return new ArrayList<Note>(this.notes);
+    }
 }

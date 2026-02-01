@@ -19,6 +19,7 @@ public class Command {
     private CommandType type;
     private int argc;
     private String[] argv;
+    private int argvIndex = 0;
 
     public Command(String commandStr) {
         String[] parts = commandStr.split(" ");
@@ -50,5 +51,27 @@ public class Command {
 
     public String[] getArgv() {
         return argv;
+    }
+
+    public String popArgv() {
+        if (argvIndex < argc) {
+            return argv[argvIndex++];
+        } else {
+            return null;
+        }
+    }
+
+    public String consumeArgv() {
+        StringBuilder sb = new StringBuilder();
+        if (argvIndex >= argc) {
+            return null;
+        }
+        while (argvIndex < argc) {
+            sb.append(argv[argvIndex++]);
+            if (argvIndex < argc) {
+                sb.append(" ");
+            }
+        }
+        return sb.toString();
     }
 }
