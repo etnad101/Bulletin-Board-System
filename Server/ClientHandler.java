@@ -14,10 +14,12 @@ public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private CommandHandler commandHandler; 
     private ServerCtx serverCtx;
+    private final Runnable onDisconnect;
 
-    public ClientHandler(Socket clientSocket, ServerCtx serverCtx) {
+    public ClientHandler(Socket clientSocket, ServerCtx serverCtx, Runnable onDisconnect) {
         this.clientSocket = clientSocket;
         this.serverCtx = serverCtx;
+        this.onDisconnect = onDisconnect;
         this.commandHandler = new CommandHandler(serverCtx);
     }
 
@@ -40,7 +42,8 @@ public class ClientHandler implements Runnable {
             }
         }
         catch (IOException e) {
-            System.out.println("Error reading from client: " + e.getMessage());
+            System.out.println("Error reading from client, disconnecting: " + e.getMessage());
+            onDisconnect.run();
         }
     }
 }

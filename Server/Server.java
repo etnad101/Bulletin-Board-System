@@ -7,11 +7,14 @@
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.io.IOException;
 
 public class Server {
     private static ServerSocket serverSocket;
     private static ServerCtx serverCtx;
+    private static int connectedClients = 0;
+    private static final AtomicBoolean isRunning = new AtomicBoolean(true);
 
     public static void main(String[] args) {
         // Check for correct number of arguments
@@ -56,11 +59,12 @@ public class Server {
         System.out.println("Server is running on port " + port);
 
         // Accept client connections
-        while (true) {
+        while (isRunning.get()) {
             try {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected: " + clientSocket.getInetAddress().getHostAddress());
-                new Thread(new ClientHandler(clientSocket, serverCtx)).start();
+                connectedClients++;
+                new Thread(new ClientHandler(clientSocket, serverCtx, () -> handleDisconnect())).start();
             } catch (IOException e) {
                 System.out.println("Error accepting client: " + e.getMessage());
                 // TODO: Break from loop in a different way to allow server shutdown
@@ -68,11 +72,19 @@ public class Server {
             }
         }
 
-        try {
-            serverSocket.close();
-            System.out.println("Server is shutting down...");
-        } catch (IOException e) {
-            System.out.println("Error closing server: " + e.getMessage());
+    }
+
+    public static void handleDisconnect() {
+        connectedClients--;
+        System.out.println("Client disconnected. Total connected clients: " + connectedClients);
+        if (connectedClients == 0) {
+            // TODO: Start Timer to wait before shutting down
+            System.out.println("No clients connected. Server will shut down.");
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                System.out.println("Error closing server: " + e.getMessage());
+            }
         }
     }
 }
