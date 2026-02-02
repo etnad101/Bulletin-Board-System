@@ -40,17 +40,20 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         // Send initial information about server to client
-        writer.println(serverCtx.config.serialize());
+        writer.println(serverCtx.config);
 
         // Handle commands sent by client
         try {
             String command;
             while ((command = reader.readLine()) != null) {
                 Response response = this.commandHandler.handleCommand(command);
-                writer.println(response.serialize());
+                writer.println(response);
                 if (response.getType() == Response.Type.SUCCESS) {
                     if (response.getSuccessCode() == SuccessCode.DISCONNECTED) {
-                        clientSocket.close();
+                        System.out.println("Client requested disconnect.");
+                        this.clientSocket.shutdownInput();
+                        this.clientSocket.shutdownOutput();
+                        this.clientSocket.close();
                         onDisconnect.run();
                         return;
                     }

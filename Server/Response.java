@@ -50,8 +50,8 @@ public class Response {
         return this.count != NO_COUNT;
     }
 
-
-    public String serialize() {
+    @Override
+    public String toString() {
         switch (this.type) {
             case SUCCESS:
                 StringBuilder res = new StringBuilder();

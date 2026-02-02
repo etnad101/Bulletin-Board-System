@@ -1,8 +1,9 @@
 public class Note {
-    private int width;
-    private int height;
     private int x;
     private int y;
+    private int width;
+    private int height;
+
     private String color;
     private String content;
     private boolean pinned;
@@ -33,7 +34,8 @@ public class Note {
         return this.pinned;
     }
 
-    public String serialize() {
+    @Override
+    public String toString() {
         return x + " " + y + " " + color + " " + content + " PINNED=" + pinned;
     }
 }

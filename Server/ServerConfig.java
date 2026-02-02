@@ -39,7 +39,8 @@ public class ServerConfig {
         return allowedColors.clone();   
     }
 
-    public String serialize() {
+    @Override
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(boardWidth).append(",")
           .append(boardHeight).append(",")
