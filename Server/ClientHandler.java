@@ -32,7 +32,7 @@ public class ClientHandler implements Runnable {
         try {
             this.reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         } catch (IOException e) {
-            System.out.println("Error reading from client: " + e.getMessage());
+            System.out.println("Error reading from client, disconnecting: " + e.getMessage());
             onDisconnect.run();
         }
     }
@@ -59,6 +59,8 @@ public class ClientHandler implements Runnable {
         }
         catch (IOException e) {
             System.out.println("Error reading from client, disconnecting: " + e.getMessage());
+            e.printStackTrace();
+            onDisconnect.run();
         }
     }
 }

@@ -12,4 +12,9 @@ public class Note {
         this.content = content;
         this.pinned = false;
     }
+
+
+    public String serialize() {
+        return x + " " + y + " " + color + " " + content + " PINNED=" + pinned;
+    }
 }
