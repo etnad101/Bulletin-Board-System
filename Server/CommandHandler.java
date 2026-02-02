@@ -74,6 +74,8 @@ public class CommandHandler {
                 Note note = new Note(
                     x,
                     y,
+                    serverCtx.config.getNoteWidth(),
+                    serverCtx.config.getNoteHeight(),
                     color,
                     content
                 );
