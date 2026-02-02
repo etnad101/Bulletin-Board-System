@@ -32,4 +32,8 @@ public class Note {
     public boolean isPinned() {
         return this.pinned;
     }
+
+    public String serialize() {
+        return x + " " + y + " " + color + " " + content + " PINNED=" + pinned;
+    }
 }
