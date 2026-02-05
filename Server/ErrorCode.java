@@ -1,5 +1,9 @@
+/*
+* ErrorCode.java
+*
+* Defines error codes used in server responses
+*/
 public enum ErrorCode {
-    OK,
     INVALID_FORMAT,
     OUT_OF_BOUNDS,
     COLOR_NOT_SUPPORTED,

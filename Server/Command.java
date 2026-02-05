@@ -53,6 +53,7 @@ public class Command {
         return argv;
     }
 
+    // Returns the next argument and increments argvIndex
     public String popArgv() {
         if (argvIndex < argc) {
             return argv[argvIndex++];
@@ -61,6 +62,22 @@ public class Command {
         }
     }
 
+    // Sets argvIndex to the position of the target argument if found
+    // popArgv must be called after this to retrieve the argument
+    public boolean containsArg(String target) {
+        int argPos = 0;
+
+        while (argPos < argc) {
+            if (argv[argPos].contains(target)) {
+                argvIndex = argPos;
+                return true;
+            }
+            argPos++;
+        }
+        return false;
+    }   
+
+    // Consumes all remaining arguments and returns them as a single string
     public String consumeArgv() {
         StringBuilder sb = new StringBuilder();
         if (argvIndex >= argc) {

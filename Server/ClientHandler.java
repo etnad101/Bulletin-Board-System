@@ -1,7 +1,10 @@
 /*
 * ClientHandler.java
 *
-* Handles client connections in threads
+* Handles each client connection in a new thread
+* - Sends initial server context to client upon connection
+* - Listens for commands from client and hands them to CommandHandler
+* - Sends responses back to client
 */
 
 import java.net.Socket;
@@ -23,6 +26,7 @@ public class ClientHandler implements Runnable {
         this.serverCtx = serverCtx;
         this.onDisconnect = onDisconnect;
         this.commandHandler = new CommandHandler(serverCtx);
+
         try {
             this.writer = new PrintWriter(this.clientSocket.getOutputStream(), true);
         } catch(IOException e) {

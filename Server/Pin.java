@@ -1,3 +1,9 @@
+/*
+* Pin.java
+*
+* Contains the position of a pin 
+*/
+
 public class Pin {
     private int x;
     private int y;

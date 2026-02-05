@@ -49,7 +49,6 @@ public class ServerConfig {
         for (String color : allowedColors) {
             sb.append(",").append(color);
         }
-        sb.append('\n');
         return sb.toString();
     }
 }

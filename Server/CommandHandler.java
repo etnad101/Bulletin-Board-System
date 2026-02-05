@@ -2,6 +2,9 @@
 * CommandHandler.java
 *
 * Handles commands sent by clients
+* - INVALID_FORMAT error is returned for any commands that do not conform to the expected format
+* - Command args are passed to specific handlers after basic validation
+* - Specific handlers perform further validation and execute the command
 */
 
 import java.util.ArrayList;
@@ -22,9 +25,14 @@ public class CommandHandler {
         return false;
     }
 
-    private boolean isWithinBounds(int x, int y) {
+    private boolean isPointWithinBounds(int x, int y) {
         return (x >= 0 && x <= serverCtx.config.getBoardWidth() &&
                 y >= 0 && y <= serverCtx.config.getBoardHeight());
+    }
+
+    private boolean isNoteWIthinBounds(int x, int y) {
+        return (x >= 0 && x + serverCtx.config.getNoteWidth() <= serverCtx.config.getBoardWidth() &&
+                y >= 0 && y + serverCtx.config.getNoteHeight() <= serverCtx.config.getBoardHeight());
     }
 
     private int[] parseCoordinates(Command command) {
@@ -41,7 +49,18 @@ public class CommandHandler {
         return new int[] { x, y };
     }
 
-    private Response handle_post(int x, int y, String color, String content) {
+    private Response handlePost(int x, int y, String color, String content) {
+        if (!isPointWithinBounds(x, y)) {
+            return Response.error(ErrorCode.OUT_OF_BOUNDS);
+        }
+
+        if (!isNoteWIthinBounds(x, y)) {
+            return Response.error(ErrorCode.OUT_OF_BOUNDS);
+        }
+
+        if (!isValidColor(color)) {
+            return Response.error(ErrorCode.COLOR_NOT_SUPPORTED);
+        }
 
         Note note = new Note(
             x,
@@ -52,20 +71,42 @@ public class CommandHandler {
             content
         );
 
-        this.serverCtx.state.addNote(note);
+        if (!this.serverCtx.state.addNote(note)) {
+            return Response.error(ErrorCode.COMPLETE_OVERLAP);
+        }
+
         return Response.success(SuccessCode.NOTE_POSTED);
     }
 
-    private Response handleGet() {
+    private Response handleGet(String color, int containsX, int containsY, String substring) {
+        if (containsX != -1 && containsY != -1 && !isPointWithinBounds(containsX, containsY)) {
+            return Response.error(ErrorCode.OUT_OF_BOUNDS);
+        }
+
+        if (color != null && !isValidColor(color)) {
+            return Response.error(ErrorCode.COLOR_NOT_SUPPORTED);
+        }
+
         Response response = Response.success(SuccessCode.NOTE);
         ArrayList<Note> notes = this.serverCtx.state.getNotes(); 
         StringBuilder sb = new StringBuilder();
         int count = 0;
+
         for (Note note : notes) {
+            if (color != null && !note.getColor().equalsIgnoreCase(color)) {
+                continue;
+            }
+            if (containsX != -1 && containsY != -1 && !note.containsPoint(containsX, containsY)) {
+                continue;
+            }
+            if (substring != null && !note.getContent().contains(substring)) {
+                continue;
+            }
             sb.append(note);
             sb.append('\n');
             count++;
         }
+
         response.setData(sb.toString(), count);
         return response; 
     }
@@ -121,15 +162,7 @@ public class CommandHandler {
                     return Response.error(ErrorCode.INVALID_FORMAT);
                 }
 
-                if (!isWithinBounds(coords[0], coords[1])) {
-                    return Response.error(ErrorCode.OUT_OF_BOUNDS);
-                }
-
-                if (!isValidColor(color)) {
-                    return Response.error(ErrorCode.COLOR_NOT_SUPPORTED);
-                }
-
-                return handle_post(coords[0], coords[1], color, content);
+                return handlePost(coords[0], coords[1], color, content);
             }
 
             case GET: {
@@ -137,16 +170,44 @@ public class CommandHandler {
 
                 if (arg1 == null) {
                     System.out.println("Blank GET command received");
-                    return handleGet();
+                    return handleGet(null, -1, -1, null);
                 } 
 
                 if (arg1.equals(new String("PINS"))) {
                     System.out.println("GET PINS command received");
+                    if (command.getArgc() != 1) {
+                        return Response.error(ErrorCode.INVALID_FORMAT);
+                    }
                     return handleGetPins();
                 }
 
                 System.out.println("General GET command received");
-                return handleGet();
+
+                String color = null;
+                int containsX = -1;
+                int containsY = -1;
+                String substring = null;
+
+                if (command.containsArg("color=")) {
+                    String target = command.popArgv();
+                    color = target.split("=")[1];
+                }
+                if (command.containsArg("contains=")) {
+                    String target = command.popArgv();
+                    String target2 = command.popArgv();
+                    try {
+                        containsX = Integer.parseInt(target.split("=")[1]);
+                        containsY = Integer.parseInt(target2);
+                    } catch (NumberFormatException e) {
+                        return Response.error(ErrorCode.INVALID_FORMAT);
+                    }
+                }
+                if (command.containsArg("refersTo=")) {
+                    String target = command.popArgv();
+                    substring = target.split("=")[1];
+                }
+                System.out.println("GET filters - color: " + color + ", contains: (" + containsX + ", " + containsY + "), refersTo: " + substring);
+                return handleGet(color, containsX, containsY, substring);
             }
 
             case PIN: {
@@ -157,11 +218,14 @@ public class CommandHandler {
                     return Response.error(ErrorCode.INVALID_FORMAT);
                 }
 
-                if (!isWithinBounds(coords[0], coords[1])) {
+                if (!isPointWithinBounds(coords[0], coords[1])) {
                     return Response.error(ErrorCode.OUT_OF_BOUNDS);
                 }
 
-                serverCtx.state.addPin(coords[0], coords[1]); 
+                if (!serverCtx.state.addPin(coords[0], coords[1])) {
+                    return Response.error(ErrorCode.PIN_ALREADY_EXISTS);
+                } 
+
                 return Response.success(SuccessCode.PIN_ADDED);
             }
 
@@ -173,28 +237,45 @@ public class CommandHandler {
                     return Response.error(ErrorCode.INVALID_FORMAT);
                 }
 
-                if (!isWithinBounds(coords[0], coords[1])) {
+                if (!isPointWithinBounds(coords[0], coords[1])) {
                     return Response.error(ErrorCode.OUT_OF_BOUNDS);
                 }
 
-                serverCtx.state.removePin(coords[0], coords[1]); 
+                if (!serverCtx.state.removePin(coords[0], coords[1])) {
+                    return Response.error(ErrorCode.PIN_NOT_FOUND);
+                }
+
                 return Response.success(SuccessCode.PIN_REMOVED);
             }
 
-            case SHAKE:
+            case SHAKE: {
                 System.out.println("SHAKE command received");
+
                 if (command.getArgc() != 0) {
                     return Response.error(ErrorCode.INVALID_FORMAT);
                 }
+
+                if (serverCtx.state.getNotes().isEmpty()){
+                    return Response.error(ErrorCode.EMPTY_BOARD);
+                }
+
                 serverCtx.state.shake();
                 return Response.success(SuccessCode.SHAKE_COMPLETE);
+            }
 
             case CLEAR:
                 System.out.println("CLEAR command received");
+
                 if (command.getArgc() != 0) {
                     return Response.error(ErrorCode.INVALID_FORMAT);
                 }
+
+                if (serverCtx.state.getNotes().isEmpty()){
+                    return Response.error(ErrorCode.EMPTY_BOARD);
+                }
+
                 serverCtx.state.clear();
+
                 return Response.success(SuccessCode.CLEARED);
 
             case DISCONNECT:

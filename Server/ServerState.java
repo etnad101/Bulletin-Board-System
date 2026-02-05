@@ -2,6 +2,7 @@
 * ServerState.java
 *
 * Holds mutable information about the server
+* - all methods are synchronized to ensure thread safety
 */
 
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class ServerState {
         this.notePinMap.clear();
     }
 
-    private Pin findPinAt(int x, int y) {
+    private synchronized Pin findPinAt(int x, int y) {
         for (Pin pin : this.pins) {
             if (pin.getX() == x && pin.getY() == y) {
                 return pin;
@@ -92,6 +93,11 @@ public class ServerState {
     }
 
     public synchronized boolean addNote(Note note) {
+        for (Note n : this.notes) {
+            if (n.getX() == note.getX() && n.getY() == note.getY()) {
+                return false;
+            }
+        }
         this.notes.add(note);
         return true;
     }

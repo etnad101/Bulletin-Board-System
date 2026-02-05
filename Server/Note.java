@@ -1,3 +1,9 @@
+/*
+* Note.java
+* 
+* Contains all information about individual notes 
+*/
+
 public class Note {
     private int x;
     private int y;
@@ -18,8 +24,24 @@ public class Note {
         this.pinned = false;
     }
 
+    public int getX() {
+        return this.x;
+    }
+
+    public int getY() {
+        return this.y;
+    }
+
+    public String getColor() {
+        return this.color;
+    }
+
+    public String getContent() {
+        return this.content;
+    }
+
     public boolean containsPoint(int px, int py) {
-        return (px >= this.x && px <= this.x + this.width && py >= this.y && py <= this.y + this.height);
+        return (px > this.x && px < this.x + this.width && py > this.y && py < this.y + this.height);
     }
 
     public void pin() {

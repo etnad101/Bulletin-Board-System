@@ -1,4 +1,10 @@
-import java.util.ArrayList;
+/*
+* Response.java
+*
+* Data structure representing a server response.
+* Each response from the server is either a success or
+* an error and may include additional data.
+*/
 
 public class Response {
     public enum Type {

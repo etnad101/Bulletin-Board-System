@@ -2,7 +2,10 @@
 * Server.java
 *
 * Main class to start server.
-* Handles client connections and spawns threads for each
+* On a new client connection, a new thread is spawned
+* to handle communication with that client.
+* If no clients are connected for 10 minutes, the server shuts down.
+* 
 */
 
 import java.net.ServerSocket;
@@ -73,7 +76,6 @@ public class Server {
                 new Thread(new ClientHandler(clientSocket, serverCtx, () -> handleDisconnect())).start();
             } catch (IOException e) {
                 System.out.println("Error accepting client: " + e.getMessage());
-                // TODO: Break from loop in a different way to allow server shutdown
                 break;
             }
         }
