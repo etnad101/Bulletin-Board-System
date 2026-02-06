@@ -1,3 +1,10 @@
+/*
+* LoginController.java
+*
+* Controls the connection screen.
+* Handles IP/Port input and initializes the network connection.
+*/
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -30,7 +37,7 @@ public class LoginController {
         connectBtn.setDisable(true);
         errorText.setVisible(false);
 
-        // Running Connection in a Separate Thread (Prevent GUI from Freezing)
+        // Run Connection in a Background Thread to Prevent GUI From Freezing
         new Thread(() -> {
             try {
                 int port = Integer.parseInt(portStr);
@@ -38,7 +45,7 @@ public class LoginController {
                 NetworkClient client = new NetworkClient();
                 client.connect(ip, port);
 
-                // Switch to the Board Screen
+                // Switch to Board Screen on the JavaFX Application Thread
                 Platform.runLater(() -> openBoardScreen(client));
 
             } catch (NumberFormatException e) {
@@ -60,7 +67,7 @@ public class LoginController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("BoardScreen.fxml"));
             Parent root = loader.load();
             
-            // Pass Client to the Board Controller
+            // Pass the Client to the Board Controller
             BoardController controller = loader.getController();
             controller.initData(client);
 
@@ -68,10 +75,25 @@ public class LoginController {
             stage.setScene(new Scene(root));
             stage.setTitle("Bulletin Board System - Connected");
             stage.centerOnScreen();
+
+            // Handling Disconnect on Window Close
+            stage.setOnCloseRequest(event -> {
+                event.consume(); 
+                
+                try {
+                    System.out.println("Window closing... sending disconnect.");
+                    client.disconnect();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    Platform.exit();
+                    System.exit(0);
+                }
+            });
+
         } catch (IOException e) {
             e.printStackTrace();
             showError("Error loading board screen.");
         }
     }
-    
 }

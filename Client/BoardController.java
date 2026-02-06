@@ -1,3 +1,11 @@
+/*
+* BoardController.java
+*
+* Controls the bulletin board GUI.
+* Handles user input (POST, PIN, GET, etc.), validates data,
+* and updates the visual board based on server responses.
+*/
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -57,7 +65,7 @@ public class BoardController {
         colorInput.getItems().addAll(config.getAllowedColors());
         colorInput.getSelectionModel().selectFirst();
 
-        // Binding Button Actions to their Respective Handlers
+        // Binding Button Actions
         postBtn.setOnAction(e -> handlePost());
         pinBtn.setOnAction(e -> handlePin());
         unpinBtn.setOnAction(e -> handleUnpin());
@@ -71,7 +79,27 @@ public class BoardController {
 
         // Initial Log Message
         log("Connected to server. Board ready.");
-        log("Use 'Refresh' to see the current board state.");
+        
+        // Auto-refresh on Connection
+        handleRefresh();
+    }
+
+    // Coordinate Validation Helper
+    private boolean validateCoordinates(String xStr, String yStr) {
+        try {
+            int x = Integer.parseInt(xStr);
+            int y = Integer.parseInt(yStr);
+            ClientConfig config = client.getConfig();
+
+            if (x < 0 || x >= config.getBoardWidth() || y < 0 || y >= config.getBoardHeight()) {
+                log("Error: Coordinates out of bounds (0-" + config.getBoardWidth() + ", 0-" + config.getBoardHeight() + ").");
+                return false;
+            }
+            return true;
+        } catch (NumberFormatException e) {
+            log("Error: Coordinates must be valid integers.");
+            return false;
+        }
     }
 
     private void sendCommandAndLog(String command) {
@@ -113,10 +141,17 @@ public class BoardController {
         String color = colorInput.getValue();
         String msg = messageInput.getText().trim();
 
+        // Replacing Newlines with Spaces to Prevent the Protocol from Breaking
+        msg = msg.replace("\n", " ").replace("\r", " ");
+
         if (x.isEmpty() || y.isEmpty() || msg.isEmpty()) {
             log("Error: X, Y, and Message required.");
             return;
         }
+
+        // Validate Coordinates
+        if (!validateCoordinates(x, y)) return;
+
         if (color == null || color.isEmpty()) {
             log("Error: Color required.");
             return;
@@ -134,6 +169,10 @@ public class BoardController {
             log("Error: X and Y required.");
             return;
         }
+        
+        // Validate Coordinates
+        if (!validateCoordinates(x, y)) return;
+
         sendCommandAndLog("PIN " + x + " " + y);
     }
 
@@ -144,6 +183,10 @@ public class BoardController {
             log("Error: X and Y required.");
             return;
         }
+
+        // Validate Coordinates
+        if (!validateCoordinates(x, y)) return;
+
         sendCommandAndLog("UNPIN " + x + " " + y);
     }
 
@@ -157,8 +200,15 @@ public class BoardController {
 
         String x = xInput.getText().trim();
         String y = yInput.getText().trim();
+        
+        // Validate if User Typed Something in X or Y
         if (!x.isEmpty() && !y.isEmpty()) {
-            cmdBuilder.append(" contains=").append(x).append(" ").append(y);
+             if (!validateCoordinates(x, y)) return;
+             cmdBuilder.append(" contains=").append(x).append(" ").append(y);
+        } else if ((!x.isEmpty() && y.isEmpty()) || (x.isEmpty() && !y.isEmpty())) {
+             // Partial Input Check
+             log("Error: For location filtering, both X and Y are required.");
+             return;
         }
 
         String msg = messageInput.getText().trim();
@@ -248,7 +298,9 @@ public class BoardController {
         }).start();
     }
 
+    
     // Drawing Functions
+
     private void drawNote(String line) {
         try {
             String[] parts = line.split(" ");
@@ -280,7 +332,7 @@ public class BoardController {
             boardPane.getChildren().addAll(rect, text);
 
         } catch (Exception e) {
-            // Ignore malformed lines
+            // Ignore Malformed Lines
         }
     }
 
@@ -296,7 +348,7 @@ public class BoardController {
             
             boardPane.getChildren().add(pin);
         } catch (Exception e) {
-            // Ignore errors
+            // Ignore Errors
         }
     }
 

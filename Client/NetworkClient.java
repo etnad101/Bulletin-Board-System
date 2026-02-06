@@ -1,3 +1,10 @@
+/*
+* NetworkClient.java
+*
+* Wrapper for the TCP socket connection.
+* Handles connecting, disconnecting, and low-level message I/O.
+*/
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,6 +27,7 @@ public class NetworkClient {
             this.config = new ClientConfig(configStr);
             System.out.println("Connected. Board Size: " + config.getBoardWidth() + "x" + config.getBoardHeight());
             
+            // Consume the Extra Newline from the Handshake
             if (in.ready()) {
                 in.readLine(); 
             }
@@ -31,10 +39,23 @@ public class NetworkClient {
     public void disconnect() throws IOException {
         if (socket != null && !socket.isClosed()) {
             try {
-                out.println("DISCONNECT"); 
-            } catch (Exception e) {
+                sendRequest("DISCONNECT"); 
+                
+                String response = in.readLine();
+                System.out.println("Server response to disconnect: " + response);
+
+                // Give the Server a Moment to Close the Connection
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            } catch (IOException e) {
+                // Ignore if Server is Already Gone
+            } finally {
+                socket.close();
             }
-            socket.close();
         }
     }
 

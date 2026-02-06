@@ -1,3 +1,10 @@
+/*
+* ClientConfig.java
+*
+* Holds immutable information about the board configuration
+* (dimensions, colors) received from the server handshake.
+*/
+
 public class ClientConfig {
 	
     private final int boardWidth;

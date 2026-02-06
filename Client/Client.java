@@ -1,3 +1,10 @@
+/*
+* Client.java
+*
+* Main entry point for the Client application.
+* Loads the initial login screen.
+*/
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
