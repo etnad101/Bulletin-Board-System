@@ -222,11 +222,7 @@ public class CommandHandler {
                     return Response.error(ErrorCode.OUT_OF_BOUNDS);
                 }
 
-                if (!serverCtx.state.addPin(coords[0], coords[1])) {
-                    return Response.error(ErrorCode.PIN_ALREADY_EXISTS);
-                } 
-
-                return Response.success(SuccessCode.PIN_ADDED);
+                return serverCtx.state.addPin(coords[0], coords[1]);
             }
 
             case UNPIN: {

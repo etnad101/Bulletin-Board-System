@@ -47,15 +47,17 @@ public class ServerState {
         return null;
     }
 
-    public synchronized boolean addPin(int x, int y) {
+    public synchronized Response addPin(int x, int y) {
         Pin pin = findPinAt(x, y);
         if (pin != null) {
-            return false;
+            return Response.error(ErrorCode.PIN_ALREADY_EXISTS);
         }
 
         pin = new Pin(x, y);
+        boolean noteUnderPin = false;
         for (Note note : this.notes) {
             if (note.containsPoint(pin.getX(), pin.getY())) {
+                noteUnderPin = true;
                 note.pin();
                 ArrayList<Pin> notePins = this.notePinMap.get(note);
                 if (notePins == null) {
@@ -65,8 +67,11 @@ public class ServerState {
                 notePins.add(pin);
             }
         }
+        if (!noteUnderPin) {
+            return Response.error(ErrorCode.NO_NOTE_AT_COORDINATE);
+        }
         this.pins.add(pin);
-        return true;
+        return Response.success(SuccessCode.PIN_ADDED);
     }
 
     public synchronized boolean removePin(int x, int y) {
